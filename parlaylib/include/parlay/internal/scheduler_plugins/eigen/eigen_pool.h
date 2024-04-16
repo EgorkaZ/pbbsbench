@@ -23,6 +23,10 @@ public:
     EigenPool.Schedule(Eigen::MakeTask(std::forward<F>(f)));
   }
 
+  bool try_run_rapid(Eigen::RapidStart::Task* task) {
+    return EigenPool.TryScheduleRapid(task);
+  }
+
   template <typename F> void run_on_thread(F &&f, size_t hint) {
     auto task = Eigen::MakeProxyTask(std::forward<F>(f));
     Eigen::Tracing::TaskShared();

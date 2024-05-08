@@ -1,5 +1,6 @@
 #pragma once
 
+#include <chrono>
 #include <cstdint>
 #include <deque>
 #include <filesystem>
@@ -77,6 +78,27 @@ private:
     std::ofstream out_file_;
 };
 
+struct AvgMetric {
+    uint64_t sum = 0;
+    uint64_t count = 0;
+
+    void Add(uint64_t value) noexcept {
+        sum += value;
+        ++count;
+    }
+
+    AvgMetric& operator+=(const AvgMetric& rhs) noexcept {
+        sum += rhs.sum;
+        count += rhs.count;
+        return *this;
+    }
+
+    friend std::ostream& operator<<(std::ostream& out, const AvgMetric& metric) {
+        auto avg = static_cast<double>(metric.sum) / static_cast<double>(metric.count);
+        return out << avg;
+    }
+};
+
 struct Metrics {
     uint64_t par_fors = 0;
     uint64_t cur_par_fors = 0;
@@ -85,6 +107,9 @@ struct Metrics {
     uint64_t tasks_stolen = 0;
     uint64_t tasks_shared = 0;
     uint64_t tasks_undivided = 0;
+    uint64_t tasks_split = 0;
+    uint64_t got_rapid_tasks = 0;
+    AvgMetric rapid_start_time;
 
     static Metrics& this_thread();
 
@@ -106,6 +131,9 @@ struct Metrics {
         tasks_stolen += rhs.tasks_stolen;
         tasks_shared += rhs.tasks_shared;
         tasks_undivided += rhs.tasks_undivided;
+        tasks_split += rhs.tasks_split;
+        got_rapid_tasks += rhs.got_rapid_tasks;
+        rapid_start_time += rhs.rapid_start_time;
         return *this;
     }
 };
@@ -120,6 +148,9 @@ inline std::ostream& operator<<(std::ostream& strm, const Metrics& metrics) {
     PRINT_FIELD(tasks_stolen)
     PRINT_FIELD(tasks_shared)
     PRINT_FIELD(tasks_undivided)
+    PRINT_FIELD(tasks_split)
+    PRINT_FIELD(got_rapid_tasks)
+    PRINT_FIELD(rapid_start_time)
 #undef PRINT_FIELD
     strm << "}";
     return strm;
@@ -152,10 +183,11 @@ public:
         }
 
         Metrics total;
+        std::ofstream ofile{out_dir_ / "metrics.json"};
         for (const auto& metrics : metrics_) {
+            ofile << *metrics << '\n';
             total += *metrics;
         }
-        std::ofstream ofile{out_dir_ / "metrics.json"};
         ofile << total << '\n';
     }
 
@@ -249,9 +281,11 @@ inline void TaskScheduled(const void* root, const void* task, uint32_t trgt_thre
 }
 
 
-inline void TaskStarted(const void* root, const void* task) {
+inline void TaskStarted(const void* root, std::chrono::nanoseconds startTime) {
     // auto this_thread = GetThreadIndex();
-    Metrics::this_thread().tasks_created++;
+    auto& metrics = Metrics::this_thread();
+    metrics.tasks_created++;
+    metrics.rapid_start_time.Add(startTime.count());
     // Queue::this_thread().push(Trace{
     //     .root = reinterpret_cast<uintptr_t>(root),
     //     .task = reinterpret_cast<uintptr_t>(task),
@@ -274,6 +308,14 @@ inline void TaskShared() {
 
 inline void TaskStolen() {
     Metrics::this_thread().tasks_stolen++;
+}
+
+inline void TaskSplit() {
+    Metrics::this_thread().tasks_split++;
+}
+
+inline void GotRapidTask() {
+    Metrics::this_thread().got_rapid_tasks++;
 }
 
 inline void TaskUndivided() {

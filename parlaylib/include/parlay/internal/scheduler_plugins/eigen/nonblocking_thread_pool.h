@@ -158,7 +158,7 @@ public:
 
     CaughtMask_ = GroupMask_.load(std::memory_order_acquire) | mask;
     FinishMask_.store(0, std::memory_order_relaxed);
-    RunMask_.store(CaughtMask_, std::memory_order_relaxed);
+    RunMask_.store(CaughtMask_, std::memory_order_release);
     std::atomic_thread_fence(std::memory_order_release);
 
     Tracing::ParForStart(nullptr);
@@ -256,7 +256,7 @@ public:
     return IsSubscribed_;
   }
 
-  bool RunIfAvailable(uint64_t mask) {
+  bool __attribute__ ((noinline)) RunIfAvailable(uint64_t mask) {
     assert(mask == Mask_);
     if (UpdateObligation(mask)) {
       Unsubscribe(mask);

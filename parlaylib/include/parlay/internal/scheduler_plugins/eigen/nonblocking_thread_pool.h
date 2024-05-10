@@ -173,11 +173,11 @@ public:
   friend class Subscriber;
 
   void Subscribe(uint64_t mask) noexcept {
-    GroupMask_.fetch_or(mask, std::memory_order_seq_cst);
+    GroupMask_.fetch_or(mask, std::memory_order_release);
   }
 
   void Unsubscribe(uint64_t mask) noexcept {
-    GroupMask_.fetch_and(~mask, std::memory_order_seq_cst);
+    GroupMask_.fetch_and(~mask, std::memory_order_release);
   }
 
   bool IsSubscribed(uint64_t mask) const noexcept {
@@ -236,7 +236,7 @@ private:
 
     (*Task_)(part, parts);
 
-    FinishMask_.fetch_or(mask, std::memory_order_seq_cst);
+    FinishMask_.fetch_or(mask, std::memory_order_release);
   }
   alignas(internal::CacheLine) std::atomic<bool> Locked_ = false;
   alignas(internal::CacheLine) std::atomic<uint64_t> GroupMask_ = 0;

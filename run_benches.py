@@ -15,6 +15,7 @@ parser.add_argument("--tbb", action="store_true", help="set if want to run with 
 parser.add_argument("--eigen", action="store_true", help="set if want to run with eigen executor")
 
 parser.add_argument("--numa", action="store_true", help="set if run on numa machine")
+parser.add_argument("--nocheck", action="store_true", help="run without result validation")
 parser.add_argument("--only", type=str, nargs='+', help="only run given test")
 parser.add_argument("--small", action="store_true", help="set if want to test on smaller datasets")
 parser.add_argument("--mode", type=str, help="run with specified mode")
@@ -62,9 +63,9 @@ if args.tbb:
 
 if args.eigen:
     eigen_modes = [
-        "EIGEN_SIMPLE",
-        "EIGEN_TIMESPAN",
-        "EIGEN_STATIC",
+#        "EIGEN_SIMPLE",
+#        "EIGEN_TIMESPAN",
+#        "EIGEN_STATIC",
         "EIGEN_TIMESPAN_GRAINSIZE",
     ]
     eigen_executor = Executor(name="eigen", flag=("EIGEN", 1), modes=eigen_modes)
@@ -105,9 +106,12 @@ for executor in executors:
 
         if not args.numa:
             cmd.append("-nonuma")
+        if args.nocheck:
+            cmd.append("-nocheck")
         if args.only:
             cmd.append("-only")
             cmd.extend(args.only)
+            cmd.append("-ext")
         if args.small:
             cmd.extend(["-small"])
 

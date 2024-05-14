@@ -1,5 +1,6 @@
 #pragma once
 #include "intrusive_ptr.h"
+#include "nonblocking_thread_pool.h"
 #include "num_threads.h"
 #include "thread_index.h"
 #include "util.h"
@@ -229,7 +230,7 @@ void ParallelFor(size_t from, size_t to, F func) {
   task();
   sched.join_main_thread();
   while (IntrusivePtrLoadRef(&rootNode) != 1) {
-    sched.execute_something_else();
+    CpuRelax();
     // sched.join_main_thread();
   }
 }
@@ -239,12 +240,7 @@ namespace detail {
 template <typename F>
 auto WrapAsTask(F&& func, const IntrusivePtr<TaskNode>& node) {
   return [&func, ref = node]() {
-    TaskStack ts;
-    auto& threadTaskStack = ThreadLocalTaskStack();
-    threadTaskStack.Add(ts);
-
     std::forward<F>(func)();
-    threadTaskStack.Pop();
   };
 }
 }
@@ -259,8 +255,9 @@ void ParallelDo(F1&& fst, F2&& sec) {
   sched.run(detail::WrapAsTask(std::forward<F1>(fst), &rootNode));
   std::forward<F2>(sec)();
 
+  sched.join_main_thread();
   while (IntrusivePtrLoadRef(&rootNode) != 1) {
-    sched.execute_something_else();
+    CpuRelax();
   }
 }
 

@@ -329,6 +329,7 @@ void ParallelFor(size_t from, size_t to, F func, int64_t grainSize) {
   IntrusivePtrAddRef(&rootNode); // avoid deletion
 
   using RapidTask = RapidStartTask<balance, grainSizeMode, F>;
+  /**/
   {
     auto rapid_task = RapidTask(std::move(func), sched, from, to, IntrusivePtr{&rootNode}, grainSize);
     if (detail::ThreadLocalTaskStack().IsEmpty()) {
@@ -339,6 +340,18 @@ void ParallelFor(size_t from, size_t to, F func, int64_t grainSize) {
       rapid_task.template IntoTask<Initial::FALSE>(from, to)();
     }
   }
+  /*
+  {
+    auto rapid_task = RapidTask(std::move(func), sched, from, to, IntrusivePtr{&rootNode}, grainSize);
+    if (!sched.try_run_rapid(&rapid_task)) {
+      if (detail::ThreadLocalTaskStack().IsEmpty()) {
+        rapid_task.template IntoTask<Initial::TRUE>(from, to)();
+      } else {
+        rapid_task.template IntoTask<Initial::FALSE>(from, to)();
+      }
+    }
+  }
+  */
 
   while (IntrusivePtrLoadRef(&rootNode) != 1) {
     sched.execute_something_else();

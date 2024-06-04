@@ -5,6 +5,7 @@
 #include <cassert>
 #include <cstddef>
 #include <iostream>
+#include <optional>
 #include <sched.h>
 #include <string>
 #include <thread>
@@ -126,15 +127,49 @@ struct StackBase {
 
 }
 
+namespace Eigen::Util {
+
 inline bool is_stack_half_full() {
   static thread_local detail::StackBase stack_base;
 
   auto stack_half = stack_base.calculate_stack_half();
   int anchor = 0;
   auto anchor_ptr = reinterpret_cast<std::uintptr_t>(&anchor);
-  // std::cerr << "stack size: " << std::dec << ((stack_base.base_ - anchor_ptr) / 1024) << "KB"\
-  //           << ", anchor: " << std::hex << anchor_ptr << ", base: " << stack_base.base_ << ", half: " << stack_half << std::endl;
   return anchor_ptr < stack_half;
+}
+
+template <typename Func>
+struct Defer {
+  Defer(const Defer&) = delete;
+  Defer& operator=(const Defer&) = delete;
+
+  template <typename F>
+  Defer(F&& func)
+    : field(std::forward<F>(func))
+  {
+  }
+
+  Defer(Defer&& other) noexcept = default;
+
+  Defer& operator=(Defer&& other) noexcept = default;
+
+  ~Defer() {
+    if (field) {
+      std::forward<Func>(*field)();
+    }
+  }
+
+  void reset() noexcept {
+    field.reset();
+  }
+
+  std::optional<std::decay_t<Func>> field;
+};
+
+template <typename Func>
+Defer<std::decay_t<Func>> defer(Func&& func) {
+  return Defer<std::decay_t<Func>>{std::forward<Func>(func)};
+}
 }
 
 #ifdef __cpp_lib_hardware_interference_size

@@ -54,20 +54,20 @@ namespace benchIO {
 		     stringIntPairT, doubleT, stringT};
   
   //elementType dataType(long a) { return longT;}
-  elementType dataType(long a) { return intType;}
-  elementType dataType(int a) { return intType;}
-  elementType dataType(uint a) { return intType;}
-  elementType dataType(double a) { return doubleT;}
-  elementType dataType(charSeq a) { return stringT;}
-  elementType dataType(char* a) { return stringT;}
-  elementType dataType(intPair a) { return intPairT;}
-  elementType dataType(uintPair a) { return intPairT;}
-  elementType dataType(uintIntPair a) { return intPairT;}
-  elementType dataType(longPair a) { return intPairT;}
-  elementType dataType(stringIntPair a) { return stringIntPairT;}
-  elementType dataType(doublePair a) { return doublePairT;}
+  constexpr inline elementType dataType(long a) { return intType;}
+  constexpr inline elementType dataType(int a) { return intType;}
+  constexpr inline elementType dataType(uint a) { return intType;}
+  constexpr inline elementType dataType(double a) { return doubleT;}
+  constexpr inline elementType dataType(const charSeq& a) { return stringT;}
+  constexpr inline elementType dataType(char* a) { return stringT;}
+  constexpr inline elementType dataType(intPair a) { return intPairT;}
+  constexpr inline elementType dataType(uintPair a) { return intPairT;}
+  constexpr inline elementType dataType(uintIntPair a) { return intPairT;}
+  constexpr inline elementType dataType(longPair a) { return intPairT;}
+  constexpr inline elementType dataType(const stringIntPair& a) { return stringIntPairT;}
+  constexpr inline elementType dataType(const doublePair& a) { return doublePairT;}
 
-  string seqHeader(elementType dt) {
+  inline string seqHeader(elementType dt) {
     switch (dt) {
     case intType: return "sequenceInt";
     case doubleT: return "sequenceDouble";

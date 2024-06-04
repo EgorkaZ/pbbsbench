@@ -26,6 +26,7 @@
 #include <cstring>
 #include "../parlay/parallel.h"
 #include "IO.h"
+#include "graph.h"
 #include "graphUtils.h"
 
 #include <sys/mman.h>
@@ -73,6 +74,23 @@ namespace benchIO {
   string EdgeArrayHeader = "EdgeArray";
   string WghEdgeArrayHeader = "WeightedEdgeArray";
   string WghAdjGraphHeader = "WeightedAdjacencyGraph";
+
+  template <class intV>
+  struct StreamWriter<edge<intV>> {
+    std::ostream& operator()(std::ostream& os, edge<intV> edge) {
+      writeToStream(os, edge.u) << ' ';
+      return writeToStream(os, edge.v);
+    }
+  };
+
+  template <class intV, class Weight>
+  struct StreamWriter<wghEdge<intV, Weight>> {
+    std::ostream& operator()(std::ostream& os, const wghEdge<intV, Weight>& edge) {
+      writeToStream(os, edge.u) << ' ';
+      writeToStream(os, edge.v) << ' ';
+      return writeToStream(os, edge.weight);
+    }
+  };
 
   template <class intV, class intE>
   int writeGraphToFile(graph<intV, intE> const &G, char* fname) {

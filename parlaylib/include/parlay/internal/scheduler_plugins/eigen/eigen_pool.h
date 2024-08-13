@@ -9,16 +9,11 @@
 #define EIGEN_USE_THREADS
 #include "nonblocking_thread_pool.h"
 
-#if EIGEN_MODE == EIGEN_RAPID
-inline auto EigenPool =
-    Eigen::ThreadPool(GetNumThreads() - 1); // 1 for main thread
-#else
 inline Eigen::ThreadPool& EigenPool() {
   static auto pool = Eigen::ThreadPool(Eigen::internal::GetNumThreads(), true,
                                           true); // todo: disable spinning?
   return pool;
 }
-#endif
 
 class EigenPoolWrapper {
 public:

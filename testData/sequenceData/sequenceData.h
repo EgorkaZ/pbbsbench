@@ -33,7 +33,7 @@ namespace dataGen {
     double payload[2];
   };
 
-  class payloadCmp : public std::binary_function <payload, payload, bool> {
+  class payloadCmp {
   public:
     bool operator()(payload const& A, payload const& B) const {
       return A.key<B.key;

@@ -15,37 +15,6 @@
 
 namespace parlay {
 
-namespace internal {
-// TODO: move to eigen header
-template <typename F>
-inline void EigenParallelFor(size_t from, size_t to, F &&func) {
-#if EIGEN_MODE == EIGEN_SIMPLE
-  EigenPartitioner::ParallelForSimple<EigenPoolWrapper>(from, to,
-                                                        std::forward<F>(func));
-#elif EIGEN_MODE == EIGEN_TIMESPAN
-  EigenPartitioner::ParallelForTimespan<EigenPoolWrapper,
-                                        EigenPartitioner::GrainSize::DEFAULT>(
-      from, to, std::forward<F>(func));
-#elif EIGEN_MODE == EIGEN_TIMESPAN_GRAINSIZE
-  EigenPartitioner::ParallelForTimespan<EigenPoolWrapper,
-                                        EigenPartitioner::GrainSize::AUTO>(
-      from, to, std::forward<F>(func));
-#elif EIGEN_MODE == EIGEN_STATIC
-  EigenPartitioner::ParallelForStatic<EigenPoolWrapper>(from, to,
-                                                        std::forward<F>(func));
-#elif EIGEN_MODE == EIGEN_RAPID
-  RapidGroup.parallel_ranges(from, to, [&func](auto from, auto to, auto part) {
-    for (size_t i = from; i != to; ++i) {
-      func(i);
-    }
-  });
-#else
-  static_assert(false, "Wrong EIGEN_MODE mode");
-#endif
-}
-
-}
-
 inline size_t num_workers() {
   // cache result to avoid calling getenv on every call
   static size_t threads = []() -> size_t {
@@ -70,8 +39,8 @@ inline size_t worker_id() {
 }
 
 template <typename F>
-inline void parallel_for(size_t start, size_t end, F&& f, long, bool) {
-    internal::EigenParallelFor(start, end, std::forward<F>(f));
+inline void parallel_for(size_t start, size_t end, F&& f, long grainsize, bool) {
+  return EigenPartitioner::ParallelFor(start, end, std::forward<F>(f), static_cast<size_t>(grainsize));
 }
 
 template <typename Lf, typename Rf>

@@ -67,10 +67,10 @@ if args.tbb:
 
 if args.eigen:
     eigen_modes = [
-#        "EIGEN_SIMPLE",
-#        "EIGEN_TIMESPAN",
-#        "EIGEN_STATIC",
-        "EIGEN_TIMESPAN_GRAINSIZE",
+        "EIGEN_STEALING",
+        "EIGEN_SHARING",
+        "EIGEN_STEALING_GRAINSIZE",
+        "EIGEN_SHARING_STEALING",
     ]
     eigen_executor = Executor(name="eigen", flag=("EIGEN", 1), modes=eigen_modes)
 

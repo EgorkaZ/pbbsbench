@@ -143,6 +143,12 @@ def detectCPUs():
     """
      Detects the number of CPUs on a system. Cribbed from pp.
      """
+    # Windows or parameter:
+    env_cpus = os.environ.get("NUMBER_OF_PROCESSORS")
+    if env_cpus:
+           ncpus = int(env_cpus)
+           if ncpus > 0:
+               return ncpus
     # Linux, Unix and MacOS:
     if hasattr(os, "sysconf"):
        if "SC_NPROCESSORS_ONLN" in os.sysconf_names:
@@ -152,11 +158,6 @@ def detectCPUs():
                return ncpus
        else: # OSX:
            return int(os.popen2("sysctl -n hw.ncpu")[1].read())
-    # Windows:
-    if os.environ.has_key("NUMBER_OF_PROCESSORS"):
-           ncpus = int(os.environ["NUMBER_OF_PROCESSORS"]);
-           if ncpus > 0:
-               return ncpus
     return 1 # Default
 
 maxcpus = detectCPUs()

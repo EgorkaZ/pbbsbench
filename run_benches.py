@@ -23,6 +23,7 @@ parser.add_argument("--nocheck", action="store_true", help="run without result v
 parser.add_argument("--only", type=str, nargs='+', help="only run given test")
 parser.add_argument("--small", action="store_true", help="set if want to test on smaller datasets")
 parser.add_argument("--mode", type=str, help="run with specified mode")
+parser.add_argument("--cpus", type=int, help="number of cpus to run tests on")
 parser.add_help = True
 
 args = parser.parse_args()
@@ -130,6 +131,7 @@ try:
         for mode in modes:
             run_env = exec_env.copy()
             run_env[mode_name] = mode
+            run_env["NUMBER_OF_PROCESSORS"] = str(args.cpus)
             print(f"now {executor.name} : {mode}")
 
             output_path = f"{target_dir}/{mode}.txt"
@@ -149,7 +151,7 @@ try:
                 cmd.extend(["-small"])
 
             print("running command: ", cmd)
-            process = subprocess.Popen(cmd, env=run_env, universal_newlines=True, stdout=output_file)
+            process = subprocess.Popen(cmd, env=run_env, universal_newlines=True, stdout=output_file, stderr=subprocess.STDOUT)
             child_pids.append(process.pid)
             rc = process.wait()
             if rc != 0:
